@@ -1,1 +1,55 @@
+name: Build STAR COMMUNICATION APK
 
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Create Android app structure
+        run: |
+          mkdir -p app/src/main/java/com/starcommunication/isp
+          mkdir -p app/src/main/assets
+          mkdir -p app/src/main/res/values
+
+          cp build.gradle app/build.gradle
+          cp AndroidManifest.xml app/src/main/AndroidManifest.xml
+          cp MainActivity.java app/src/main/java/com/starcommunication/isp/MainActivity.java
+          cp index.html app/src/main/assets/index.html
+
+          if [ -f styles.xml ]; then
+            cp styles.xml app/src/main/res/values/styles.xml
+          fi
+
+      - name: Build STAR COMMUNICATION APK
+        run: gradle :app:assembleDebug --stacktrace --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: STAR-COMMUNICATION-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
